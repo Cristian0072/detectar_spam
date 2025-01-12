@@ -1,4 +1,5 @@
 import networkx as nx
+import spacy
 
 # Lista de palabras de spam
 lista_palabras = [
@@ -29,6 +30,7 @@ lista_palabras = [
 class Automata:
     def __init__(self):
         self.grafo_spam = self._crear_grafo()
+        self.nlp = spacy.load("es_core_news_md")  # cargar modelo de lenguaje en español
 
     # funcion para crear el grafo
     def _crear_grafo(self):
@@ -67,17 +69,36 @@ class Automata:
         grafo.add_edges_from(relaciones)
         return grafo
 
+    # funcion para validar el texto ingresado
+    def validar_texto(self, texto):
+        p_sentido = 10
+        if not isinstance(texto, str) or not texto.strip():
+            return False, "El texto ingresado no es válido"
+        # se tokeniza el texto ingresado
+        palabras = self.nlp(texto)
+
+        # Verificar si hay suficientes palabras con sentido
+        palabras_validas = [token for token in palabras if token.is_alpha]
+        if len(palabras_validas) <= p_sentido:
+            return (
+                False,
+                "El texto no tiene suficientes palabras para categorizarlo como válido",
+            )
+
+        # Verificar coherencia semántica
+        frases_con_sujeto = any(token.dep_ == "nsubj" for token in palabras)
+        if not frases_con_sujeto:
+            return False, "El texto ingresado no es válido"
+
+        return True, "El texto ingresado es válido"
+
     # funcion para buscar palabras en el mensaje ingresado
     def buscar_lexico(self, mensaje):
-        # validación de entrada
-        if not isinstance(mensaje, str) or not mensaje.strip():
-            return []
-
         palabras = []
         palabra = ""
-        # se recorre el mensaje y se valida si es una letra
+        # se recorre el mensaje y se valida si es una letra o un numero
         for letra in mensaje:
-            if letra.isalpha():
+            if letra.isalnum():
                 palabra += letra.lower()
             else:
                 if palabra:
@@ -102,17 +123,21 @@ class Automata:
 
     # funcion para clasificar si el mensaje es spam o no
     def es_spam(self, mensaje):
+        porcentaje = 0.4  # 40%
         # validación de entrada
         texto = mensaje["texto"]
-        # se valida si el texto es una cadena de texto y si no esta vacio
-        if not isinstance(texto, str) or not texto.strip():
-            return "Texto no válido", []
+        es_valido, mensaje = self.validar_texto(texto)
+        if not es_valido:
+            return mensaje, []
 
         palabras = self.buscar_lexico(texto)
         coincidencias_semanticas = self.buscar_semantica(palabras)
         es_sintacticamente_spam = self.buscar_sintactica(palabras)
-
-        if coincidencias_semanticas or es_sintacticamente_spam:
-            return "Spam", coincidencias_semanticas
+        
+        if (
+            len(coincidencias_semanticas) > int(len(palabras) * porcentaje)
+            and es_sintacticamente_spam
+        ):
+            return "El texto es SPAM", coincidencias_semanticas
         else:
-            return "No Spam", []
+            return "El texto no es SPAM", []
