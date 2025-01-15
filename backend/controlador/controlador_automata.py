@@ -1,5 +1,14 @@
 import networkx as nx
+import nltk
+from nltk.tokenize import word_tokenize
 import spacy
+
+# Verificar y descargar recursos necesarios
+try:
+    nltk.data.find("tokenizers/punkt")
+except LookupError:
+    nltk.download("punkt")
+    nltk.download("punkt_tab")
 
 # Lista de palabras de spam
 lista_palabras = [
@@ -24,6 +33,7 @@ lista_palabras = [
     "solicítalo ahora",
     "no te lo pierdas",
     "oportunidad",
+    "exclusivo",
 ]
 
 
@@ -65,6 +75,15 @@ class Automata:
             ("oportunidad", "gratis"),
             ("gratis", "descuento"),
             ("descuento", "limitado"),
+            ("estafa", "gratis"),
+            ("no es spam", "gratis"),
+            ("expira", "oferta"),
+            ("confidencial", "oferta"),
+            ("100 '%' gratis", "seguro"),
+            ("lotería", "gratis"),
+            ("premio", "gratis"),
+            ("última oportunidad", "gratis"),
+            ("precio especial", "gratis"),
         ]
         grafo.add_edges_from(relaciones)
         return grafo
@@ -121,6 +140,12 @@ class Automata:
                 return True
         return False
 
+    # función para detectar si el mensaje es spam o no mediante el modelo de lenguaje natural de nltk
+    def detectar_spam_nltk(self, texto):
+        palabras = word_tokenize(texto.lower())
+        palabras_clave = set(palabras) & set(lista_palabras)
+        return len(palabras_clave) > 0
+
     # funcion para clasificar si el mensaje es spam o no
     def es_spam(self, mensaje):
         porcentaje = 0.4  # 40%
@@ -133,10 +158,12 @@ class Automata:
         palabras = self.buscar_lexico(texto)
         coincidencias_semanticas = self.buscar_semantica(palabras)
         es_sintacticamente_spam = self.buscar_sintactica(palabras)
-        
+        spam = self.detectar_spam_nltk(texto)
+       
         if (
             len(coincidencias_semanticas) > int(len(palabras) * porcentaje)
-            and es_sintacticamente_spam
+            or es_sintacticamente_spam
+            or spam
         ):
             return "El texto es SPAM", coincidencias_semanticas
         else:
