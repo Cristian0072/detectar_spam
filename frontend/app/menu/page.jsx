@@ -67,7 +67,7 @@ export default function Menu() {
           placeholder="Escriba el mensaje aquí..."
           value={texto}
           onChange={manejar_cambio_texto}
-          className="border rounded p-2 mb-4 w-full h-32 text-black resize-none"
+          className="border rounded p-2 mb-4 w-full h-60 text-black resize-none"
         />
 
       </form>

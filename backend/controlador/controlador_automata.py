@@ -159,7 +159,7 @@ class Automata:
         coincidencias_semanticas = self.buscar_semantica(palabras)
         es_sintacticamente_spam = self.buscar_sintactica(palabras)
         spam = self.detectar_spam_nltk(texto)
-       
+        print(coincidencias_semanticas)
         if (
             len(coincidencias_semanticas) > int(len(palabras) * porcentaje)
             or es_sintacticamente_spam
