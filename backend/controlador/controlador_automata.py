@@ -111,34 +111,35 @@ class Automata:
 
         return True, "El texto ingresado es válido"
 
-    # funcion para buscar palabras en el mensaje ingresado
+    # funcion para separar las palabras del mensaje ingresado
     def buscar_lexico(self, mensaje):
         palabras = []
         palabra = ""
-        # se recorre el mensaje y se valida si es una letra o un numero
+
         for letra in mensaje:
-            if letra.isalnum():
-                palabra += letra.lower()
+            if palabra and letra == " ":
+                palabras.append(palabra)
+                palabra = ""
             else:
-                if palabra:
-                    palabras.append(palabra)
-                    palabra = ""
+                palabra += letra
         if palabra:
             palabras.append(palabra)
         return palabras
 
-    # funcion para buscar palabras en el grafo
+    # funcion para buscar coincidencias entre las palabras del mensaje y las palabras de spam
     def buscar_semantica(self, palabras):
         coincidencias = [palabra for palabra in palabras if palabra in lista_palabras]
         return coincidencias
 
     # funcion para buscar si hay una estructura sintactica en el mensaje
     def buscar_sintactica(self, palabras):
-        # se recorre el mensaje y se valida si hay una estructura sintactica
+        numero = 0
+        valido = False
         for i in range(len(palabras) - 1):
             if self.grafo_spam.has_edge(palabras[i], palabras[i + 1]):
-                return True
-        return False
+                numero += 1
+                valido = True
+        return valido, numero
 
     # función para detectar si el mensaje es spam o no mediante el modelo de lenguaje natural de nltk
     def detectar_spam_nltk(self, texto):
@@ -149,6 +150,7 @@ class Automata:
     # funcion para clasificar si el mensaje es spam o no
     def es_spam(self, mensaje):
         porcentaje = 0.4  # 40%
+        umbral_coincidencias = 5  # 5
         # validación de entrada
         texto = mensaje["texto"]
         es_valido, mensaje = self.validar_texto(texto)
@@ -157,12 +159,12 @@ class Automata:
 
         palabras = self.buscar_lexico(texto)
         coincidencias_semanticas = self.buscar_semantica(palabras)
-        es_sintacticamente_spam = self.buscar_sintactica(palabras)
+        es_sintacticamente_spam, n_coincidencias = self.buscar_sintactica(palabras)
         spam = self.detectar_spam_nltk(texto)
         print(coincidencias_semanticas)
         if (
             len(coincidencias_semanticas) > int(len(palabras) * porcentaje)
-            or es_sintacticamente_spam
+            or (es_sintacticamente_spam and n_coincidencias > umbral_coincidencias)
             or spam
         ):
             return "El texto es SPAM", coincidencias_semanticas
