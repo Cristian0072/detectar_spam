@@ -39,17 +39,17 @@ export default function Menu() {
       setResultado("Hubo un error. Intenta de nuevo.");
     }
   };
-  // se crea una función que envía el texto con un retraso de 500ms
+  // se crea una función que envía el texto con un retraso de 1s
   const enviar_con_retraso = useCallback(
     debounce((nuevoTexto) => {
       enviar_texto(nuevoTexto);
-    }, 1000),
+    }, 1000), //1s
     []
   );
 
   // función que maneja el cambio de texto
   const manejar_cambio_texto = (e) => {
-    const nuevoTexto = e.target.value;
+    const nuevoTexto = e.target.value; 
     setTexto(nuevoTexto);
 
     if (!nuevoTexto.trim()) {

@@ -88,7 +88,7 @@ class Automata:
         grafo.add_edges_from(relaciones)
         return grafo
 
-    # funcion para validar el texto ingresado
+    # funcion para validar el texto ingresado 
     def validar_texto(self, texto):
         p_sentido = 10
         if not isinstance(texto, str) or not texto.strip():
@@ -104,7 +104,7 @@ class Automata:
                 "El texto no tiene suficientes palabras para categorizarlo como válido",
             )
 
-        # Verificar coherencia semántica
+        # Verificar coherencia semántica mediante la presencia de un sujeto
         frases_con_sujeto = any(token.dep_ == "nsubj" for token in palabras)
         if not frases_con_sujeto:
             return False, "El texto ingresado no es válido"
@@ -167,6 +167,6 @@ class Automata:
             or (es_sintacticamente_spam and n_coincidencias > umbral_coincidencias)
             or spam
         ):
-            return "El texto es SPAM", coincidencias_semanticas
+            return "El texto ingresado es SPAM", coincidencias_semanticas
         else:
-            return "El texto no es SPAM", []
+            return "El texto ingresado no es SPAM", []
